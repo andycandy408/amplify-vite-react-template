@@ -27,7 +27,7 @@ function App() {
     <main>
       <h1>My todos</h1>
       <button onClick={createTodo}>+ new</button>
-      <button onClick={signOut}>Sign out</button>
+      
       <ul>
         {todos.map((todo) => (
           <li 
@@ -36,12 +36,9 @@ function App() {
           </li>
         ))}
       </ul>
+      <button onClick={signOut}>Sign out</button>
       <div>
-        🥳 App successfully hosted. Try creating a new todo.
-        <br />
-        <a href="https://docs.amplify.aws/react/start/quickstart/#make-frontend-updates">
-          Review next step of this tutorial.
-        </a>
+        
       </div>
     </main>
   );
