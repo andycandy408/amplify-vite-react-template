@@ -13,7 +13,7 @@ function App() {
   const [newHours, setNewHours] = useState("");
   const { signOut } = useAuthenticator();
 
-  // 🔹 Load todos
+  // --- Load todos ---
   useEffect(() => {
     const sub = client.models.Todo.observeQuery().subscribe({
       next: (data) => setTodos([...data.items]),
@@ -21,25 +21,30 @@ function App() {
     return () => sub.unsubscribe();
   }, []);
 
-  // 🔹 Load market hours
+  // --- Load market hours ---
   useEffect(() => {
     async function loadMarketHours() {
-      const result = await client.models.MarketHours.list();
-      if (result.data.length > 0) {
-        const record = result.data[0];
-        setMarketHours(record.hours);
-        setMarketHoursId(record.id);
-      } else {
-        // If none exist yet, create one
-        const created = await client.models.MarketHours.create({ hours: "9:00 AM - 5:00 PM" });
-        setMarketHours(created.data.hours);
-        setMarketHoursId(created.data.id);
+      try {
+        const result = await client.models.MarketHours.list();
+        if (result.data.length > 0) {
+          const record = result.data[0];
+          setMarketHours(record.hours);
+          setMarketHoursId(record.id);
+        } else {
+          const created = await client.models.MarketHours.create({
+            hours: "9:00 AM - 5:00 PM",
+          });
+          setMarketHours(created.data.hours);
+          setMarketHoursId(created.data.id);
+        }
+      } catch (err) {
+        console.error("Error loading MarketHours:", err);
       }
     }
     loadMarketHours();
   }, []);
 
-  // 🔹 Todo actions
+  // --- Todo actions ---
   function createTodo() {
     const content = window.prompt("Todo content");
     if (content) client.models.Todo.create({ content });
@@ -49,7 +54,7 @@ function App() {
     client.models.Todo.delete({ id });
   }
 
-  // 🔹 Market hours actions
+  // --- Market Hours modal actions ---
   function openModal() {
     setNewHours(marketHours);
     setIsModalOpen(true);
@@ -102,7 +107,8 @@ function App() {
         <div
           style={{
             position: "fixed",
-            top: 0, left: 0,
+            top: 0,
+            left: 0,
             width: "100vw",
             height: "100vh",
             backgroundColor: "rgba(0,0,0,0.5)",
