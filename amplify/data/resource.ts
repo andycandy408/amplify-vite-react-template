@@ -23,6 +23,11 @@ export const data = defineData({
     // API Key is used for a.allow.public() rules
     apiKeyAuthorizationMode: {
       expiresInDays: 30,
+    MarketHours: a
+      .model({
+        hours: a.string(),
+      })
+      .authorization((allow) => [allow.owner()]),
     },
   },
 });
