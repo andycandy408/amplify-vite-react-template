@@ -7,13 +7,11 @@ const client = generateClient<Schema>();
 
 function App() {
   const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-  const [marketHours, setMarketHours] = useState<string>("Loading...");
-  const [marketHoursId, setMarketHoursId] = useState<string | null>(null);
+  const [marketHours, setMarketHours] = useState<string>("9:00 AM - 5:00 PM");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newHours, setNewHours] = useState("");
+  const [newHours, setNewHours] = useState(marketHours);
   const { signOut } = useAuthenticator();
 
-  // --- Load todos ---
   useEffect(() => {
     const sub = client.models.Todo.observeQuery().subscribe({
       next: (data) => setTodos([...data.items]),
@@ -21,30 +19,6 @@ function App() {
     return () => sub.unsubscribe();
   }, []);
 
-  // --- Load market hours ---
-  useEffect(() => {
-    async function loadMarketHours() {
-      try {
-        const result = await client.models.MarketHours.list();
-        if (result.data.length > 0) {
-          const record = result.data[0];
-          setMarketHours(record.hours);
-          setMarketHoursId(record.id);
-        } else {
-          const created = await client.models.MarketHours.create({
-            hours: "9:00 AM - 5:00 PM",
-          });
-          setMarketHours(created.data.hours);
-          setMarketHoursId(created.data.id);
-        }
-      } catch (err) {
-        console.error("Error loading MarketHours:", err);
-      }
-    }
-    loadMarketHours();
-  }, []);
-
-  // --- Todo actions ---
   function createTodo() {
     const content = window.prompt("Todo content");
     if (content) client.models.Todo.create({ content });
@@ -54,19 +28,12 @@ function App() {
     client.models.Todo.delete({ id });
   }
 
-  // --- Market Hours modal actions ---
   function openModal() {
     setNewHours(marketHours);
     setIsModalOpen(true);
   }
 
-  async function saveMarketHours() {
-    if (marketHoursId) {
-      await client.models.MarketHours.update({ id: marketHoursId, hours: newHours });
-    } else {
-      const created = await client.models.MarketHours.create({ hours: newHours });
-      setMarketHoursId(created.data.id);
-    }
+  function saveMarketHours() {
     setMarketHours(newHours);
     setIsModalOpen(false);
   }
@@ -107,8 +74,7 @@ function App() {
         <div
           style={{
             position: "fixed",
-            top: 0,
-            left: 0,
+            top: 0, left: 0,
             width: "100vw",
             height: "100vh",
             backgroundColor: "rgba(0,0,0,0.5)",
