@@ -7,11 +7,13 @@ const client = generateClient<Schema>();
 
 function App() {
   const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-  const [marketHours, setMarketHours] = useState<string>("9:00 AM - 5:00 PM");
+  const [marketHours, setMarketHours] = useState<string>("Loading...");
+  const [marketHoursId, setMarketHoursId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newHours, setNewHours] = useState(marketHours);
+  const [newHours, setNewHours] = useState("");
   const { signOut } = useAuthenticator();
 
+  // 🔹 Load todos
   useEffect(() => {
     const sub = client.models.Todo.observeQuery().subscribe({
       next: (data) => setTodos([...data.items]),
@@ -19,6 +21,25 @@ function App() {
     return () => sub.unsubscribe();
   }, []);
 
+  // 🔹 Load market hours
+  useEffect(() => {
+    async function loadMarketHours() {
+      const result = await client.models.MarketHours.list();
+      if (result.data.length > 0) {
+        const record = result.data[0];
+        setMarketHours(record.hours);
+        setMarketHoursId(record.id);
+      } else {
+        // If none exist yet, create one
+        const created = await client.models.MarketHours.create({ hours: "9:00 AM - 5:00 PM" });
+        setMarketHours(created.data.hours);
+        setMarketHoursId(created.data.id);
+      }
+    }
+    loadMarketHours();
+  }, []);
+
+  // 🔹 Todo actions
   function createTodo() {
     const content = window.prompt("Todo content");
     if (content) client.models.Todo.create({ content });
@@ -28,12 +49,19 @@ function App() {
     client.models.Todo.delete({ id });
   }
 
+  // 🔹 Market hours actions
   function openModal() {
     setNewHours(marketHours);
     setIsModalOpen(true);
   }
 
-  function saveMarketHours() {
+  async function saveMarketHours() {
+    if (marketHoursId) {
+      await client.models.MarketHours.update({ id: marketHoursId, hours: newHours });
+    } else {
+      const created = await client.models.MarketHours.create({ hours: newHours });
+      setMarketHoursId(created.data.id);
+    }
     setMarketHours(newHours);
     setIsModalOpen(false);
   }
