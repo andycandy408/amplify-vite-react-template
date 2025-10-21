@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import type { Schema } from "../amplify/data/resource";
 import { generateClient } from "aws-amplify/data";
-import { useAuthenticator } from '@aws-amplify/ui-react';
+import { useAuthenticator } from "@aws-amplify/ui-react";
 
 const client = generateClient<Schema>();
 
 function App() {
   const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
   const [marketHours, setMarketHours] = useState<string>("9:00 AM - 5:00 PM");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newHours, setNewHours] = useState(marketHours);
   const { signOut } = useAuthenticator();
 
   useEffect(() => {
@@ -26,9 +28,14 @@ function App() {
     client.models.Todo.delete({ id });
   }
 
-  function changeMarketHours() {
-    const newHours = window.prompt("Enter new market hours:", marketHours);
-    if (newHours) setMarketHours(newHours);
+  function openModal() {
+    setNewHours(marketHours);
+    setIsModalOpen(true);
+  }
+
+  function saveMarketHours() {
+    setMarketHours(newHours);
+    setIsModalOpen(false);
   }
 
   return (
@@ -36,7 +43,7 @@ function App() {
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h1>My Todos</h1>
         <div>
-          <button onClick={changeMarketHours}>Change Market Hours</button>
+          <button onClick={openModal}>Change Market Hours</button>
           <button onClick={signOut} style={{ marginLeft: "0.5rem" }}>Sign out</button>
         </div>
       </header>
@@ -47,15 +54,71 @@ function App() {
 
       <ul>
         {todos.map((todo) => (
-          <li 
+          <li
             onClick={() => deleteTodo(todo.id)}
             key={todo.id}
-            style={{ cursor: "pointer", marginTop: "0.25rem" }}
+            style={{
+              cursor: "pointer",
+              marginTop: "0.25rem",
+              listStyle: "none",
+              padding: "0.25rem 0",
+            }}
           >
             {todo.content}
           </li>
         ))}
       </ul>
+
+      {/* --- Modal Popup --- */}
+      {isModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0, left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              padding: "2rem",
+              borderRadius: "12px",
+              width: "300px",
+              textAlign: "center",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+            }}
+          >
+            <h2>Change Market Hours</h2>
+            <input
+              type="text"
+              value={newHours}
+              onChange={(e) => setNewHours(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "0.5rem",
+                marginTop: "1rem",
+                border: "1px solid #ccc",
+                borderRadius: "6px",
+              }}
+            />
+            <div style={{ marginTop: "1.5rem" }}>
+              <button onClick={saveMarketHours}>Save</button>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                style={{ marginLeft: "0.5rem" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
